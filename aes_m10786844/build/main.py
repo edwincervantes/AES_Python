@@ -58,7 +58,7 @@ def format_ascii_to_bit(text):
     :return: bit value
     '''
     bit_val = bin(int(text))
-    return bit_val
+    return bit_val[2:]
 
 
 def format_to_hex(bit):
@@ -111,18 +111,19 @@ def get_subkeys(aes):
 
 def get_message(aes):
     '''
-    Assigns the plaintext message to our aes object from the file in ASCII format
+    Assigns the plaintext message to our aes object from the file in ASCII format then to binary
+    TODO: The # of bits does not match up to what it's supposed to be. May need to debug later
     :param: aes_Obj
     :return: None
     '''
     with open(aes.plaintext_path, 'r') as f:
         message_plaintext = f.read().replace('\n', '')
-        print(message_plaintext)
+        print('Message: ' + message_plaintext)
     aes.message_ascii = to_ascii(message_plaintext)   #Correct
-    print(aes.message_ascii)
+    print('Message in ASCII: ' + aes.message_ascii)
     aes.message_bit = format_ascii_to_bit(aes.message_ascii)
-    print(aes.message_bit)
-    print(len(aes.message_bit))
+    print('The message in bit form: ' + aes.message_bit)
+    print('Number of bits in message: ' + str(len(aes.message_bit)))
     if aes.message_ascii is None:
         raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
 
