@@ -37,8 +37,12 @@ def to_ascii(string):
     :param: string value
     :return: ASCII value
     '''
-    ascii_val = ''.join(str(ord(c)) for c in string)
-    return ascii_val
+    char_list = list(string)
+    asc_arr = []
+    for char in char_list:
+        ascii_val = ''.join(str(ord(c)) for c in char)
+        asc_arr.append(ascii_val)
+    return asc_arr
 
 
 def format_ascii_to_bit(text):
@@ -49,14 +53,11 @@ def format_ascii_to_bit(text):
     '''
     char_list = list(text)
     bit_arr = []
-    print(char_list)
     for char in char_list:
-        binary = format(int(char), 'b').zfill(4)
-        print(binary)
+        binary = format(int(char), 'b').zfill(8)
         bit_arr.append(binary)
     str = ''
     joins = str.join(bit_arr)
-    #joins = format(int(text), 'b')
     return joins
 
 
@@ -181,7 +182,7 @@ def get_message(aes):
         message_plaintext = f.read().strip()
         print('Message: ' + message_plaintext)
     aes.message_ascii = to_ascii(message_plaintext)
-    print('Message in ASCII: ' + aes.message_ascii)
+    print('Message in ASCII: ' + str(aes.message_ascii))
     aes.message_bit = format_ascii_to_bit(aes.message_ascii)
     print('The message in bit form: ' + aes.message_bit)
     print('Number of bits in message: ' + str(len(aes.message_bit)))
