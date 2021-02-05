@@ -47,8 +47,17 @@ def format_ascii_to_bit(text):
     :param: ascii value
     :return: bit value
     '''
-    bit_val = bin(int(text))
-    return bit_val[2:]
+    char_list = list(text)
+    bit_arr = []
+    print(char_list)
+    for char in char_list:
+        binary = format(int(char), 'b').zfill(4)
+        print(binary)
+        bit_arr.append(binary)
+    str = ''
+    joins = str.join(bit_arr)
+    #joins = format(int(text), 'b')
+    return joins
 
 
 def format_to_hex(bit):
@@ -169,14 +178,14 @@ def get_message(aes):
     :return: None
     '''
     with open(aes.plaintext_path, 'r') as f:
-        message_plaintext = f.read().replace('\n', '')
+        message_plaintext = f.read().strip()
         print('Message: ' + message_plaintext)
-    aes.message_ascii = to_ascii(message_plaintext)   #Correct
+    aes.message_ascii = to_ascii(message_plaintext)
     print('Message in ASCII: ' + aes.message_ascii)
     aes.message_bit = format_ascii_to_bit(aes.message_ascii)
     print('The message in bit form: ' + aes.message_bit)
     print('Number of bits in message: ' + str(len(aes.message_bit)))
-    if aes.message_ascii is None:
+    if aes.message_bit is None:
         raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
 
 
@@ -185,7 +194,7 @@ def check_OS_and_files(aes):
     Used to determine what the OS is that is being run to determine correct directory structure.
     Also checks to verify that the message and subkey are located in the designated .txt
     :param: aes_Obj
-    :return: None if successful
+    :return: None
     '''
     if aes.platform == "linux" or aes.platform == "linux2" or aes.platform == "darwin":
         if not os.path.exists(PLAINTEXT_PATH_LINUX):
