@@ -31,16 +31,6 @@ class aes_Obj(object):
         self.subkey1 = None
 
 
-def to_string(ascii):
-    '''
-    Convert an ascii value to a string
-    :param: ASCII value
-    :return: string value
-    '''
-
-    return ascii_val
-
-
 def to_ascii(string):
     '''
     Convert a string value to ASCII value
@@ -82,11 +72,65 @@ def format_to_bit(hex):
     return bit_val
 
 
-def do_round(aes):
+def sub_bytes():
+    '''
+    Substitute each byte in the State
+    :param: aes_Obj
+    :return: None
+    '''
     return
 
-def calculate_add_key(aes):
+
+def shift_rows():
+    '''
+    Shift bytes in the State
+    :param: aes_Obj
+    :return: None
+    '''
     return
+
+
+def mix_columns():
+    '''
+    Invertible transformation on each column, this step will be skipped in the final round
+    :param: aes_Obj
+    :return: None
+    '''
+
+    return
+
+
+def add_key():
+    '''
+    This where we XOR our 128-bit subkey with the state.
+    :param: aes_Obj
+    :return: None
+    '''
+
+    return
+
+def do_round(aes):
+    '''
+    These are the operations that will be performed in each round of AES
+    :param: aes_Obj
+    :return: None
+    '''
+    sub_bytes()
+    shift_rows()
+    mix_columns()
+    add_key()
+
+    return
+
+
+def calculate_add_key(aes):
+    '''
+    A 128-bit subkey XOR with the State
+    :param: aes_Obj
+    :return: None
+    '''
+    return
+
 
 def get_subkeys(aes):
     '''
@@ -109,6 +153,14 @@ def get_subkeys(aes):
         aes.subkey1 = '0' + aes.subkey1
 
 
+def create_matrix(aes):
+    '''
+    The matrix is a 4x4 array of bytes that is generated from the bits of the key or message.
+    :param: aes_Obj
+    :return: None
+    '''
+
+
 def get_message(aes):
     '''
     Assigns the plaintext message to our aes object from the file in ASCII format then to binary
@@ -126,7 +178,6 @@ def get_message(aes):
     print('Number of bits in message: ' + str(len(aes.message_bit)))
     if aes.message_ascii is None:
         raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
-
 
 
 def check_OS_and_files(aes):
@@ -162,6 +213,7 @@ def script_execute(aes):
     check_OS_and_files(aes)
     get_message(aes)
     get_subkeys(aes)
+    create_matrix(aes)
     calculate_add_key(aes)
     do_round(aes)
 
