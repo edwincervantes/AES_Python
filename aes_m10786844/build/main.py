@@ -83,10 +83,10 @@ def format_to_bit(hex):
 
 
 def do_round(aes):
-
+    return
 
 def calculate_add_key(aes):
-
+    return
 
 def get_subkeys(aes):
     '''
