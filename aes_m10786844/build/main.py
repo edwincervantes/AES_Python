@@ -3,8 +3,8 @@
 import sys
 import os
 import traceback
-import math
-import binascii
+from textwrap import wrap
+import numpy as np      #MUST BE INSTALLED python -m pip install --user numpy scipy matplotlib ipython jupyter pandas sympy nose
 
 PATH = os.getcwd()
 PLAINTEXT_PATH_WINDOWS = os.path.dirname(PATH) + '\data\plaintext.txt'
@@ -25,10 +25,13 @@ class aes_Obj(object):
         self.platform = sys.platform
         self.message_ascii = None
         self.message_bit = None
+        self.message_hex = None
+        self.initial_state = np.array([[], [], [], []])
         self.plaintext_path = None
         self.subkey_path = None
         self.subkey0 = None
         self.subkey1 = None
+
 
 
 def to_ascii(string):
@@ -67,7 +70,7 @@ def format_to_hex(bit):
     :param: bit value
     :return: hexadecimal value
     '''
-    hex_val = hex(int(bit, 2))
+    hex_val = hex(int(bit, 2))[2:]
     return hex_val
 
 
@@ -142,6 +145,13 @@ def calculate_add_key(aes):
     return
 
 
+def get_initial_state(aes):
+    bytes = wrap(aes.message_hex, 2)
+    #for byte in bytes:
+    np.insert(aes.initial_state, 0, bytes)
+    print(aes.initial_state)
+
+
 def get_subkeys(aes):
     '''
     Assigns the subkeys to our AES object in bit form(128-bits) while getting the hexadecimal from our file
@@ -186,6 +196,8 @@ def get_message(aes):
     aes.message_bit = format_ascii_to_bit(aes.message_ascii)
     print('The message in bit form: ' + aes.message_bit)
     print('Number of bits in message: ' + str(len(aes.message_bit)))
+    aes.message_hex = format_to_hex(aes.message_bit)
+    print('Message in hex-form: ' + aes.message_hex)
     if aes.message_bit is None:
         raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
 
@@ -226,6 +238,7 @@ def script_execute(aes):
     create_matrix(aes)
     calculate_add_key(aes)
     do_round(aes)
+    get_initial_state(aes)
 
 
 if __name__ == '__main__':
