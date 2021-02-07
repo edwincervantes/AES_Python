@@ -31,6 +31,14 @@ AES_S_BOX = np.array([
         [0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf],
         [0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16]
         ])  #To use the hex values do hex(AES_S_BOX[x,n]) or else it will translate it to binary
+
+MIX_COLUMNS = np.array([
+    [0x2, 0x3, 0x1, 0x1],
+    [0x1, 0x2, 0x3, 0x1],
+    [0x1, 0x1, 0x2, 0x3],
+    [0x3, 0x1, 0x1, 0x2]
+])
+
 '''
 :param: aes_Obj
 :return: None 
@@ -47,8 +55,11 @@ class aes_Obj(object):
         self.initial_state = None
         self.plaintext_path = None
         self.subkey_path = None
-        self.subkey0 = None
-        self.subkey1 = None
+        self.subkey0_bin = None
+        self.subkey0_hex = None
+        self.subkey1_bin = None
+        self.subkey1_hex = None
+        self.subkey_matrix = None
 
 
 
@@ -127,7 +138,6 @@ def sub_bytes(aes):
         aes.initial_state = (np.where(aes.initial_state == third, new3, aes.initial_state))
 
         aes.initial_state = (np.where(aes.initial_state == fourth, new4, aes.initial_state))
-    print(aes.initial_state)
 
     return
 
@@ -157,10 +167,15 @@ def mix_columns(aes):
 
 def add_key(aes):
     '''
-    This where we XOR our 128-bit subkey with the state.
+    This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
     :param: aes_Obj
     :return: None
     '''
+    for x, y in zip(aes.initial_state, aes.subkey_matrix):
+        print(type(x))
+        print(type(y))
+        out_arr = np.bitwise_xor(hex(aes.initial_state), hex(aes.subkey_matrix))
+        print(out_arr)
 
     return
 
@@ -171,19 +186,14 @@ def do_round(aes):
     :return: None
     '''
     sub_bytes(aes)
+    print('sub_byte function: ')
+    print(aes.initial_state)
     shift_rows(aes)
+    print('Shift_rows function')
+    print(aes.initial_state)
     mix_columns(aes)
     add_key(aes)
 
-    return
-
-
-def calculate_add_key(aes):
-    '''
-    A 128-bit subkey XOR with the State
-    :param: aes_Obj
-    :return: None
-    '''
     return
 
 
@@ -211,6 +221,31 @@ def get_initial_state(aes):
     print('Initial State Matrix: \n' + str(aes.initial_state))
 
 
+def get_subkey_matrix(aes):
+    '''
+    We will need the subkey put into a 4x4 matrix represented using the numpy module
+    :param: aes_Obj
+    :return: None
+    '''
+
+    bytes = wrap(aes.subkey1_hex, 2)
+
+    row1 = []
+    row2 = []
+    row3 = []
+    row4 = []
+    for index in range(4):
+        row1.append('0x' + bytes[index])
+    for index in bytes[4:8]:
+        row2.append('0x' + index)
+    for index in bytes[8:12]:
+        row3.append('0x' + index)
+    for index in bytes[12:16]:
+        row4.append('0x' + index)
+    aes.subkey_matrix = np.array([row1, row2, row3, row4])
+    print('sub_key matrix: \n' + str(aes.subkey_matrix))
+
+
 def get_subkeys(aes):
     '''
     Assigns the subkeys to our AES object in bit form(128-bits) while getting the hexadecimal from our file
@@ -220,24 +255,16 @@ def get_subkeys(aes):
     '''
     with open(aes.subkey_path, 'r') as f:
         lines = f.readlines()
-        key0 = lines[0]
-        key1 = lines[1]
-    aes.subkey0 = format_to_bit(key0)
-    aes.subkey1 = format_to_bit(key1)
-    if aes.subkey0 is None or aes.subkey1 is None:
+        aes.subkey0_hex = lines[0]
+        aes.subkey1_hex = lines[1]
+    aes.subkey0_bin = format_to_bit(aes.subkey0_hex)
+    aes.subkey1 = format_to_bit(aes.subkey1_hex)
+    if aes.subkey0_bin is None or aes.subkey1 is None:
         raise Exception("The Subkeys were not able to be generated. Please read the file report.pdf")
-    if len(aes.subkey0) < 128:
-        aes.subkey0 = '0' + aes.subkey0
+    if len(aes.subkey0_bin) < 128:
+        aes.subkey0_bin = '0' + aes.subkey0_bin
     if len(aes.subkey1) < 128:
-        aes.subkey1 = '0' + aes.subkey1
-
-
-def create_matrix(aes):
-    '''
-    The matrix is a 4x4 array of bytes that is generated from the bits of the key or message.
-    :param: aes_Obj
-    :return: None
-    '''
+        aes.subkey1_bin = '0' + aes.subkey1_bin
 
 
 def get_message(aes):
@@ -294,10 +321,10 @@ def script_execute(aes):
     check_OS_and_files(aes)
     get_message(aes)
     get_subkeys(aes)
-    create_matrix(aes)
-    calculate_add_key(aes)
     get_initial_state(aes)
+    get_subkey_matrix(aes)
     do_round(aes)
+
 
 
 
