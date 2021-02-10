@@ -171,13 +171,25 @@ def add_key(aes):
     :param: aes_Obj
     :return: None
     '''
+    print('SubkeyMatrix: \n')
+    print(aes.subkey_matrix)
+    xor_list = []
     for x, y in zip(aes.initial_state, aes.subkey_matrix):
-        print(type(x))
-        print(type(y))
-        out_arr = np.bitwise_xor(hex(aes.initial_state), hex(aes.subkey_matrix))
-        print(out_arr)
+        for elem1, elem2 in zip(x, y):
+            elem1 = int(elem1, 16)
+            new_elem1 = elem1 + 0x200
+            elem2 = int(elem2, 16)
+            new_elem2 = elem2 + 0x200
+            xor1 = new_elem1 ^ new_elem2
+            xor_list.append(xor1)
+    chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
+    aes.initial_state[0] = chunks[0]
+    aes.initial_state[1] = chunks[1]
+    aes.initial_state[2] = chunks[2]
+    aes.initial_state[3] = chunks[3]
 
     return
+
 
 def do_round(aes):
     '''
