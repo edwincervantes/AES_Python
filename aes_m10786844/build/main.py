@@ -165,10 +165,12 @@ def mix_columns(aes):
     '''
     list = []
     print("Mix Columns: ")
-    mix_col_list = [MIX_COLUMNS[0]]
-    i_state_list = [aes.initial_state.T[0]]
+    mix_col_list = (MIX_COLUMNS[0].tolist())
+    i_state_list = (aes.initial_state.T[0].tolist())
     print(mix_col_list)
     print(i_state_list)
+    print(type(mix_col_list))
+    print(type(i_state_list))
 
 
     for i in range(0, len(mix_col_list)):
