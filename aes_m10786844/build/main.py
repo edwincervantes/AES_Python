@@ -163,20 +163,19 @@ def mix_columns(aes):
     :param: aes_Obj
     :return: None
     '''
+    list = []
     print("Mix Columns: ")
-    print(MIX_COLUMNS)
-    for x, y in zip(MIX_COLUMNS[0], aes.initial_state.T[0]):
+    mix_col_list = [MIX_COLUMNS[0]]
+    i_state_list = [aes.initial_state.T[0]]
+    print(mix_col_list)
+    print(i_state_list)
 
 
-        hex_int_y = int(y, 16)
-        new_int_y = hex_int_y + 0x00
+    for i in range(0, len(mix_col_list)):
+        list.append(i_state_list[i] * mix_col_list[i])
 
-        new_int_x = hex(x)
+    print(list)
 
-        print(new_int_x)
-        print(hex(new_int_y))
-        r = new_int_x * new_int_y
-        #print(r)
     return
 
 
