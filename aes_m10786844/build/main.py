@@ -2,6 +2,7 @@
 # EJ Cervantes
 import sys
 import os
+import itertools
 import traceback
 from textwrap import wrap
 import numpy as np  # MUST BE INSTALLED python -m pip install --user numpy scipy matplotlib ipython jupyter pandas sympy nose
@@ -164,11 +165,18 @@ def mix_columns(aes):
     '''
     print("Mix Columns: ")
     print(MIX_COLUMNS)
-    for x in np.nditer(MIX_COLUMNS[0]):
-        print(x)                #Iterates first row of mix columns
-    for y in np.nditer(aes.initial_state.T[0]):
-        print(y)                #Iterates first column of state S
+    for x, y in zip(MIX_COLUMNS[0], aes.initial_state.T[0]):
 
+
+        hex_int_y = int(y, 16)
+        new_int_y = hex_int_y + 0x00
+
+        new_int_x = hex(x)
+
+        print(new_int_x)
+        print(hex(new_int_y))
+        r = new_int_x * new_int_y
+        #print(r)
     return
 
 
