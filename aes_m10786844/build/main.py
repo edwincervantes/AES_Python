@@ -162,6 +162,12 @@ def mix_columns(aes):
     :param: aes_Obj
     :return: None
     '''
+    print("Mix Columns: ")
+    print(MIX_COLUMNS)
+    for x in np.nditer(MIX_COLUMNS[0]):
+        print(x)                #Iterates first row of mix columns
+    for y in np.nditer(aes.initial_state.T[0]):
+        print(y)                #Iterates first column of state S
 
     return
 
@@ -172,7 +178,7 @@ def add_key(aes):
     :param: aes_Obj
     :return: None
     '''
-    print('SubkeyMatrix: \n')
+    print('SubkeyMatrix:')
     print(aes.subkey_matrix)
     xor_list = []
     for x, y in zip(aes.initial_state, aes.subkey_matrix):
