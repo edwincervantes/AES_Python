@@ -114,6 +114,15 @@ def format_to_bit(hex):
     return bit_val
 
 
+def generate_2_subkeys(key):
+    '''
+    Generate the first two subkeys given a 128-bit encryption key
+    :param: 128_bit encryption key
+    :return: subkey01, subkey02 both 128 bits
+    '''
+
+    return
+
 def sub_bytes(aes):
     '''
     Substitute each byte in the State with the AES_S_BOX value
@@ -191,6 +200,7 @@ def mix_columns(aes):
         total = total + n
 
         print(type(n))
+    print(total)
     print(hex(total))
     return
 
