@@ -147,7 +147,8 @@ def sub_bytes(aes):
         aes.initial_state = (np.where(aes.initial_state == third, new3, aes.initial_state))
 
         aes.initial_state = (np.where(aes.initial_state == fourth, new4, aes.initial_state))
-
+    print('Sub Byte Result: ')
+    print(aes.initial_state)
     return
 
 
@@ -160,6 +161,8 @@ def shift_rows(aes):
     aes.initial_state[1] = np.roll(aes.initial_state[1], -1)
     aes.initial_state[2] = np.roll(aes.initial_state[2], -2)
     aes.initial_state[3] = np.roll(aes.initial_state[3], -3)
+    print("Shift Row Result")
+    print(aes.initial_state)
 
     return
 
@@ -211,8 +214,6 @@ def add_key(aes):
     :param: aes_Obj
     :return: None
     '''
-    print('SubkeyMatrix:')
-    print(aes.subkey_matrix)
     xor_list = []
     for x, y in zip(aes.initial_state, aes.subkey_matrix):
         for elem1, elem2 in zip(x, y):
@@ -221,12 +222,19 @@ def add_key(aes):
             elem2 = int(elem2, 16)
             new_elem2 = elem2 + 0x200
             xor1 = new_elem1 ^ new_elem2
-            xor_list.append(xor1)
+            xor1 = hex(xor1)[2:]
+            if len(xor1) < 2:
+                r = '0' + xor1
+                xor_list.append(r)
+            else:
+                xor_list.append(xor1)
     chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
     aes.initial_state[0] = chunks[0]
     aes.initial_state[1] = chunks[1]
     aes.initial_state[2] = chunks[2]
     aes.initial_state[3] = chunks[3]
+    print('AddKey result: ')
+    print(aes.initial_state)
 
     return
 
@@ -237,14 +245,14 @@ def do_round(aes):
     :param: aes_Obj
     :return: None
     '''
-    sub_bytes(aes)
-    print('sub_byte function: ')
-    print(aes.initial_state)
-    shift_rows(aes)
-    print('Shift_rows function')
-    print(aes.initial_state)
-    mix_columns(aes)
     add_key(aes)
+    sub_bytes(aes)
+    shift_rows(aes)
+
+   # mix_columns(aes)
+
+    #add_key(aes) #with subkey 1
+
 
     return
 
