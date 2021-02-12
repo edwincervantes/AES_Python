@@ -270,6 +270,7 @@ def get_initial_state(aes):
     for index in bytes[12:16]:
         row4.append(index)
     aes.initial_state = np.array([row1, row2, row3, row4])
+    aes.initial_state = aes.initial_state.T
     print('Initial State Matrix: \n' + str(aes.initial_state))
 
 
@@ -280,7 +281,7 @@ def get_subkey_matrix(aes):
     :return: None
     '''
 
-    bytes = wrap(aes.subkey1_hex, 2)
+    bytes = wrap(aes.subkey0_hex, 2)
 
     row1 = []
     row2 = []
@@ -295,6 +296,7 @@ def get_subkey_matrix(aes):
     for index in bytes[12:16]:
         row4.append('0x' + index)
     aes.subkey_matrix = np.array([row1, row2, row3, row4])
+    aes.subkey_matrix = aes.subkey_matrix.T
     print('sub_key matrix: \n' + str(aes.subkey_matrix))
 
 
