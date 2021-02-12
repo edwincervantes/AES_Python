@@ -155,6 +155,10 @@ def shift_rows(aes):
     return
 
 
+def to_hex(hexdig):
+    return int(hexdig, 16)
+
+
 def mix_columns(aes):
     '''
     Invertible transformation on each column, this step will be skipped in the final round
@@ -164,6 +168,7 @@ def mix_columns(aes):
     :return: None
     '''
     list = []
+    list2 = []
     print("Mix Columns: ")
     mix_col_list = (MIX_COLUMNS[0].tolist())
     i_state_list = (aes.initial_state.T[0].tolist())
@@ -172,12 +177,21 @@ def mix_columns(aes):
     print(type(mix_col_list))
     print(type(i_state_list))
 
-
     for i in range(0, len(mix_col_list)):
-        list.append(i_state_list[i] * mix_col_list[i])
-
+        x = str(i_state_list[i])
+        y = str(mix_col_list[i])
+        r = (to_hex(x) * to_hex(y))
+        print(r)
+        print(type(r))
+        list.append(hex(r))
     print(list)
+    total = 0
+    for i in range(0, len(list)):
+        n = to_hex(list[i])
+        total = total + n
 
+        print(type(n))
+    print(hex(total))
     return
 
 
