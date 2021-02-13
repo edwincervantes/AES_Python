@@ -6,6 +6,8 @@ import itertools
 import traceback
 from textwrap import wrap
 import numpy as np  # MUST BE INSTALLED python -m pip install --user numpy scipy matplotlib ipython jupyter pandas sympy nose
+from functools import reduce
+from operator import xor
 
 PATH = os.getcwd()
 PLAINTEXT_PATH_WINDOWS = os.path.dirname(PATH) + '\data\plaintext.txt'
@@ -60,7 +62,324 @@ class aes_Obj(object):
         self.subkey0_hex = None
         self.subkey1_bin = None
         self.subkey1_hex = None
-        self.subkey_matrix = None
+        self.subkey_matrix0 = None
+        self.subkey_matrix1 = None
+
+    @staticmethod
+    def sub_bytes(self):
+        '''
+        Substitute each byte in the State with the AES_S_BOX value
+        :param: aes_Obj
+        :return: None
+        '''
+        for x in aes.initial_state:
+            first = x[0]
+            second = x[1]
+            third = x[2]
+            fourth = x[3]
+
+            new1 = hex(AES_S_BOX[int(first[0], 16), int(first[1], 16)])
+            new2 = hex(AES_S_BOX[int(second[0], 16), int(second[1], 16)])
+            new3 = hex(AES_S_BOX[int(third[0], 16), int(third[1], 16)])
+            new4 = hex(AES_S_BOX[int(fourth[0], 16), int(fourth[1], 16)])
+
+            aes.initial_state = (np.where(aes.initial_state == first, new1, aes.initial_state))
+
+            aes.initial_state = (np.where(aes.initial_state == second, new2, aes.initial_state))
+
+            aes.initial_state = (np.where(aes.initial_state == third, new3, aes.initial_state))
+
+            aes.initial_state = (np.where(aes.initial_state == fourth, new4, aes.initial_state))
+        print('Sub Byte Result: ')
+        print(aes.initial_state)
+        return
+
+    @staticmethod
+    def shift_rows(self):
+        '''
+        Shift bytes in the State according to AES shifting standard
+        :param: aes_Obj
+        :return: None
+        '''
+        aes.initial_state[1] = np.roll(aes.initial_state[1], -1)
+        aes.initial_state[2] = np.roll(aes.initial_state[2], -2)
+        aes.initial_state[3] = np.roll(aes.initial_state[3], -3)
+        print("Shift Row Result")
+        print(aes.initial_state)
+
+        return
+
+    @staticmethod
+    def mix_columns(self):
+        '''
+        Invertible transformation on each column, this step will be skipped in the final round
+        Look at lecture10 p. 29 for an example. Take the row of the static matrix and then the column of
+        our current state, this will give you 1 value for the next part
+        :param: aes_Obj
+        :return: None
+        '''
+        list = []
+        list2 = []
+
+        for j in range(0, len(aes.initial_state)):
+            for i in range(0, len(MIX_COLUMNS)):
+                mix_col_list = (MIX_COLUMNS[i].tolist())
+                i_state_list = (aes.initial_state.T[j].tolist())
+
+                for k in range(0, len(mix_col_list)):
+                    x = str(i_state_list[k])
+                    y = str(mix_col_list[k])
+                    r = (to_hex(x) * to_hex(y))
+                    r = bin(r)[2:]
+                    list.append(r)
+
+                n = 00000000
+
+                for i in range(0, len(list)):
+                    n = (int(list[i], 2) ^ n)
+                list2.append(hex(n))
+        chunks = [list2[x:x + 4] for x in range(0, len(list2), 4)]
+        aes.initial_state[0] = chunks[0]
+        aes.initial_state[1] = chunks[1]
+        aes.initial_state[2] = chunks[2]
+        aes.initial_state[3] = chunks[3]
+        print("Mix_columns results:")
+        print(aes.initial_state)
+
+        return
+
+    @staticmethod
+    def add_key_0(self):
+        '''
+        This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
+        :param: aes_Obj
+        :return: None
+        '''
+        xor_list = []
+        for x, y in zip(aes.initial_state, aes.subkey_matrix0):
+            for elem1, elem2 in zip(x, y):
+                elem1 = int(elem1, 16)
+                new_elem1 = elem1 + 0x200
+                elem2 = int(elem2, 16)
+                new_elem2 = elem2 + 0x200
+                xor1 = new_elem1 ^ new_elem2
+                xor1 = hex(xor1)[2:]
+                if len(xor1) < 2:
+                    r = '0' + xor1
+                    xor_list.append(r)
+                else:
+                    xor_list.append(xor1)
+        chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
+        aes.initial_state[0] = chunks[0]
+        aes.initial_state[1] = chunks[1]
+        aes.initial_state[2] = chunks[2]
+        aes.initial_state[3] = chunks[3]
+        print('AddKey result: ')
+        print(aes.initial_state)
+
+        return
+
+    @staticmethod
+    def add_key_1(self):
+        '''
+        This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
+        :param: aes_Obj
+        :return: None
+        '''
+        xor_list = []
+        for x, y in zip(aes.initial_state, aes.subkey_matrix1):
+            for elem1, elem2 in zip(x, y):
+                elem1 = int(elem1, 16)
+                new_elem1 = elem1 + 0x200
+                elem2 = int(elem2, 16)
+                new_elem2 = elem2 + 0x200
+                xor1 = new_elem1 ^ new_elem2
+                xor1 = hex(xor1)[2:]
+                if len(xor1) < 2:
+                    r = '0' + xor1
+                    xor_list.append(r)
+                else:
+                    xor_list.append(xor1)
+        chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
+        aes.initial_state[0] = chunks[0]
+        aes.initial_state[1] = chunks[1]
+        aes.initial_state[2] = chunks[2]
+        aes.initial_state[3] = chunks[3]
+        print('AddKey result: ')
+        print(aes.initial_state)
+
+        return
+
+    @staticmethod
+    def do_round(self):
+        '''
+        These are the operations that will be performed in each round of AES
+        :param: aes_Obj
+        :return: None
+        '''
+        aes_Obj.check_OS_and_files(aes)
+        aes_Obj.get_message(aes)
+        aes_Obj.get_subkeys(aes)
+        aes_Obj.get_initial_state(aes)
+        aes_Obj.get_subkey_matrix_0(aes)
+        aes_Obj.get_subkey_matrix_1(aes)
+
+        aes_Obj.add_key_0(aes)  # With subkey 0
+
+        aes_Obj.sub_bytes(aes)
+        aes_Obj.shift_rows(aes)
+        aes_Obj.mix_columns(aes)
+
+        aes_Obj.add_key_1(aes)  # With subkey 1
+
+        return
+
+    @staticmethod
+    def get_initial_state(self):
+        '''
+        The initial state is described as a block 4x4 matrix with the hexadecimal values of the message
+        This function will obtain that for us and assign it to the object
+        :param: aes_Obj
+        :return: None
+        '''
+        bytes = wrap(aes.message_hex, 2)
+        row1 = []
+        row2 = []
+        row3 = []
+        row4 = []
+        for index in range(4):
+            row1.append(bytes[index])
+        for index in bytes[4:8]:
+            row2.append(index)
+        for index in bytes[8:12]:
+            row3.append(index)
+        for index in bytes[12:16]:
+            row4.append(index)
+        aes.initial_state = np.array([row1, row2, row3, row4])
+        aes.initial_state = aes.initial_state.T
+        print('Initial State Matrix: \n' + str(aes.initial_state))
+
+    @staticmethod
+    def get_subkey_matrix_0(self):
+        '''
+        We will need the subkey put into a 4x4 matrix represented using the numpy module
+        :param: aes_Obj
+        :return: None
+        '''
+
+        bytes = wrap(aes.subkey0_hex, 2)
+
+        row1 = []
+        row2 = []
+        row3 = []
+        row4 = []
+        for index in range(4):
+            row1.append('0x' + bytes[index])
+        for index in bytes[4:8]:
+            row2.append('0x' + index)
+        for index in bytes[8:12]:
+            row3.append('0x' + index)
+        for index in bytes[12:16]:
+            row4.append('0x' + index)
+        aes.subkey_matrix0 = np.array([row1, row2, row3, row4])
+        aes.subkey_matrix0 = aes.subkey_matrix0.T
+        print('sub_key matrix 0: \n' + str(aes.subkey_matrix0))
+
+    @staticmethod
+    def get_subkey_matrix_1(self):
+        '''
+        We will need the subkey put into a 4x4 matrix represented using the numpy module
+        :param: aes_Obj
+        :return: None
+        '''
+
+        bytes = wrap(aes.subkey1_hex, 2)
+
+        row1 = []
+        row2 = []
+        row3 = []
+        row4 = []
+        for index in range(4):
+            row1.append('0x' + bytes[index])
+        for index in bytes[4:8]:
+            row2.append('0x' + index)
+        for index in bytes[8:12]:
+            row3.append('0x' + index)
+        for index in bytes[12:16]:
+            row4.append('0x' + index)
+        aes.subkey_matrix1 = np.array([row1, row2, row3, row4])
+        aes.subkey_matrix1 = aes.subkey_matrix1.T
+        print('sub_key matrix 1: \n' + str(aes.subkey_matrix1))
+
+    @staticmethod
+    def get_subkeys(self):
+        '''
+        Assigns the subkeys to our AES object in bit form(128-bits) while getting the hexadecimal from our file
+        Sometimes our bit converter drops the leading 0 so we need to add it to ensure it is 128-bits
+        :param: aes_Obj
+        :return: None
+        '''
+        with open(aes.subkey_path, 'r') as f:
+            lines = f.readlines()
+            aes.subkey0_hex = lines[0]
+            aes.subkey1_hex = lines[1]
+        aes.subkey0_bin = format_to_bit(aes.subkey0_hex)
+        aes.subkey1 = format_to_bit(aes.subkey1_hex)
+        if aes.subkey0_bin is None or aes.subkey1 is None:
+            raise Exception("The Subkeys were not able to be generated. Please read the file report.pdf")
+        if len(aes.subkey0_bin) < 128:
+            aes.subkey0_bin = '0' + aes.subkey0_bin
+        if len(aes.subkey1) < 128:
+            aes.subkey1_bin = '0' + aes.subkey1_bin
+
+    @staticmethod
+    def get_message(self):
+        '''
+        Assigns the plaintext message to our aes object from the file in ASCII format then to binary
+        TODO: The # of bits does not match up to what it's supposed to be. May need to debug later
+        :param: aes_Obj
+        :return: None
+        '''
+        with open(aes.plaintext_path, 'r') as f:
+            message_plaintext = f.read().strip()
+            print('Message: ' + message_plaintext)
+        aes.message_ascii = to_ascii(message_plaintext)
+        print('Message in ASCII: ' + str(aes.message_ascii))
+        aes.message_bit = format_ascii_to_bit(aes.message_ascii)
+        print('The message in bit form: ' + aes.message_bit)
+        print('Number of bits in message: ' + str(len(aes.message_bit)))
+        aes.message_hex = format_to_hex(aes.message_bit)
+        print('Message in hex-form: ' + aes.message_hex)
+        if aes.message_bit is None:
+            raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
+
+    @staticmethod
+    def check_OS_and_files(self):
+        '''
+        Used to determine what the OS is that is being run to determine correct directory structure.
+        Also checks to verify that the message and subkey are located in the designated .txt
+        :param: aes_Obj
+        :return: None
+        '''
+        if aes.platform == "linux" or aes.platform == "linux2" or aes.platform == "darwin":
+            if not os.path.exists(PLAINTEXT_PATH_LINUX):
+                raise Exception('The message to encrypt must be stored in .../data/plaintext.txt')
+            aes.plaintext_path = PLAINTEXT_PATH_LINUX
+            if not os.path.exists(SUBKEY_PATH_LINUX):
+                raise Exception('The message to encrypt must be stored in .../data/subkey_example.txt')
+            aes.subkey_path = SUBKEY_PATH_LINUX
+
+        elif aes.platform == "win32" or aes.platform == "win64":
+            if not os.path.exists(PLAINTEXT_PATH_WINDOWS):
+                raise Exception('The message to encrypt must be stored in ...\data\plaintext.txt')
+            aes.plaintext_path = PLAINTEXT_PATH_WINDOWS
+            if not os.path.exists(SUBKEY_PATH_WINDOWS):
+                raise Exception('The message to encrypt must be stored in ...\data\subkey_example.txt')
+            aes.subkey_path = SUBKEY_PATH_WINDOWS
+
+
+def to_hex(hexdig):
+    return int(hexdig, 16)
 
 
 def to_ascii(string):
@@ -123,269 +442,14 @@ def generate_2_subkeys(key):
 
     return
 
-def sub_bytes(aes):
-    '''
-    Substitute each byte in the State with the AES_S_BOX value
-    :param: aes_Obj
-    :return: None
-    '''
-    for x in aes.initial_state:
-        first = x[0]
-        second = x[1]
-        third = x[2]
-        fourth = x[3]
-
-        new1 = hex(AES_S_BOX[int(first[0], 16), int(first[1], 16)])
-        new2 = hex(AES_S_BOX[int(second[0], 16), int(second[1], 16)])
-        new3 = hex(AES_S_BOX[int(third[0], 16), int(third[1], 16)])
-        new4 = hex(AES_S_BOX[int(fourth[0], 16), int(fourth[1], 16)])
-
-        aes.initial_state = (np.where(aes.initial_state == first, new1, aes.initial_state))
-
-        aes.initial_state = (np.where(aes.initial_state == second, new2, aes.initial_state))
-
-        aes.initial_state = (np.where(aes.initial_state == third, new3, aes.initial_state))
-
-        aes.initial_state = (np.where(aes.initial_state == fourth, new4, aes.initial_state))
-    print('Sub Byte Result: ')
-    print(aes.initial_state)
-    return
-
-
-def shift_rows(aes):
-    '''
-    Shift bytes in the State according to AES shifting standard
-    :param: aes_Obj
-    :return: None
-    '''
-    aes.initial_state[1] = np.roll(aes.initial_state[1], -1)
-    aes.initial_state[2] = np.roll(aes.initial_state[2], -2)
-    aes.initial_state[3] = np.roll(aes.initial_state[3], -3)
-    print("Shift Row Result")
-    print(aes.initial_state)
-
-    return
-
-
-def to_hex(hexdig):
-    return int(hexdig, 16)
-
-
-def mix_columns(aes):
-    '''
-    Invertible transformation on each column, this step will be skipped in the final round
-    Look at lecture10 p. 29 for an example. Take the row of the static matrix and then the column of
-    our current state, this will give you 1 value for the next part
-    :param: aes_Obj
-    :return: None
-    '''
-    list = []
-    list2 = []
-    print("Mix Columns: ")
-    mix_col_list = (MIX_COLUMNS[0].tolist())
-    i_state_list = (aes.initial_state.T[0].tolist())
-    print(mix_col_list)
-    print(i_state_list)
-
-    for i in range(0, len(mix_col_list)):
-        x = str(i_state_list[i])
-        y = str(mix_col_list[i])
-
-        r = (to_hex(x) * to_hex(y))
-        print(r)
-        print(type(r))
-        list.append(hex(r))
-    print(list)
-    total = 0
-    for i in range(0, len(list)):
-        n = to_hex(list[i])
-        total = total + n
-
-        print(type(n))
-    print(total)
-    print(hex(total))
-    return
-
-
-def add_key(aes):
-    '''
-    This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
-    :param: aes_Obj
-    :return: None
-    '''
-    xor_list = []
-    for x, y in zip(aes.initial_state, aes.subkey_matrix):
-        for elem1, elem2 in zip(x, y):
-            elem1 = int(elem1, 16)
-            new_elem1 = elem1 + 0x200
-            elem2 = int(elem2, 16)
-            new_elem2 = elem2 + 0x200
-            xor1 = new_elem1 ^ new_elem2
-            xor1 = hex(xor1)[2:]
-            if len(xor1) < 2:
-                r = '0' + xor1
-                xor_list.append(r)
-            else:
-                xor_list.append(xor1)
-    chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
-    aes.initial_state[0] = chunks[0]
-    aes.initial_state[1] = chunks[1]
-    aes.initial_state[2] = chunks[2]
-    aes.initial_state[3] = chunks[3]
-    print('AddKey result: ')
-    print(aes.initial_state)
-
-    return
-
-
-def do_round(aes):
-    '''
-    These are the operations that will be performed in each round of AES
-    :param: aes_Obj
-    :return: None
-    '''
-    add_key(aes)
-    sub_bytes(aes)
-    shift_rows(aes)
-
-    mix_columns(aes)
-
-    #add_key(aes) #with subkey 1
-
-
-    return
-
-
-def get_initial_state(aes):
-    '''
-    The initial state is described as a block 4x4 matrix with the hexadecimal values of the message
-    This function will obtain that for us and assign it to the object
-    :param: aes_Obj
-    :return: None
-    '''
-    bytes = wrap(aes.message_hex, 2)
-    row1 = []
-    row2 = []
-    row3 = []
-    row4 = []
-    for index in range(4):
-        row1.append(bytes[index])
-    for index in bytes[4:8]:
-        row2.append(index)
-    for index in bytes[8:12]:
-        row3.append(index)
-    for index in bytes[12:16]:
-        row4.append(index)
-    aes.initial_state = np.array([row1, row2, row3, row4])
-    aes.initial_state = aes.initial_state.T
-    print('Initial State Matrix: \n' + str(aes.initial_state))
-
-
-def get_subkey_matrix(aes):
-    '''
-    We will need the subkey put into a 4x4 matrix represented using the numpy module
-    :param: aes_Obj
-    :return: None
-    '''
-
-    bytes = wrap(aes.subkey0_hex, 2)
-
-    row1 = []
-    row2 = []
-    row3 = []
-    row4 = []
-    for index in range(4):
-        row1.append('0x' + bytes[index])
-    for index in bytes[4:8]:
-        row2.append('0x' + index)
-    for index in bytes[8:12]:
-        row3.append('0x' + index)
-    for index in bytes[12:16]:
-        row4.append('0x' + index)
-    aes.subkey_matrix = np.array([row1, row2, row3, row4])
-    aes.subkey_matrix = aes.subkey_matrix.T
-    print('sub_key matrix: \n' + str(aes.subkey_matrix))
-
-
-def get_subkeys(aes):
-    '''
-    Assigns the subkeys to our AES object in bit form(128-bits) while getting the hexadecimal from our file
-    Sometimes our bit converter drops the leading 0 so we need to add it to ensure it is 128-bits
-    :param: aes_Obj
-    :return: None
-    '''
-    with open(aes.subkey_path, 'r') as f:
-        lines = f.readlines()
-        aes.subkey0_hex = lines[0]
-        aes.subkey1_hex = lines[1]
-    aes.subkey0_bin = format_to_bit(aes.subkey0_hex)
-    aes.subkey1 = format_to_bit(aes.subkey1_hex)
-    if aes.subkey0_bin is None or aes.subkey1 is None:
-        raise Exception("The Subkeys were not able to be generated. Please read the file report.pdf")
-    if len(aes.subkey0_bin) < 128:
-        aes.subkey0_bin = '0' + aes.subkey0_bin
-    if len(aes.subkey1) < 128:
-        aes.subkey1_bin = '0' + aes.subkey1_bin
-
-
-def get_message(aes):
-    '''
-    Assigns the plaintext message to our aes object from the file in ASCII format then to binary
-    TODO: The # of bits does not match up to what it's supposed to be. May need to debug later
-    :param: aes_Obj
-    :return: None
-    '''
-    with open(aes.plaintext_path, 'r') as f:
-        message_plaintext = f.read().strip()
-        print('Message: ' + message_plaintext)
-    aes.message_ascii = to_ascii(message_plaintext)
-    print('Message in ASCII: ' + str(aes.message_ascii))
-    aes.message_bit = format_ascii_to_bit(aes.message_ascii)
-    print('The message in bit form: ' + aes.message_bit)
-    print('Number of bits in message: ' + str(len(aes.message_bit)))
-    aes.message_hex = format_to_hex(aes.message_bit)
-    print('Message in hex-form: ' + aes.message_hex)
-    if aes.message_bit is None:
-        raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
-
-
-def check_OS_and_files(aes):
-    '''
-    Used to determine what the OS is that is being run to determine correct directory structure.
-    Also checks to verify that the message and subkey are located in the designated .txt
-    :param: aes_Obj
-    :return: None
-    '''
-    if aes.platform == "linux" or aes.platform == "linux2" or aes.platform == "darwin":
-        if not os.path.exists(PLAINTEXT_PATH_LINUX):
-            raise Exception('The message to encrypt must be stored in .../data/plaintext.txt')
-        aes.plaintext_path = PLAINTEXT_PATH_LINUX
-        if not os.path.exists(SUBKEY_PATH_LINUX):
-            raise Exception('The message to encrypt must be stored in .../data/subkey_example.txt')
-        aes.subkey_path = SUBKEY_PATH_LINUX
-
-    elif aes.platform == "win32" or aes.platform == "win64":
-        if not os.path.exists(PLAINTEXT_PATH_WINDOWS):
-            raise Exception('The message to encrypt must be stored in ...\data\plaintext.txt')
-        aes.plaintext_path = PLAINTEXT_PATH_WINDOWS
-        if not os.path.exists(SUBKEY_PATH_WINDOWS):
-            raise Exception('The message to encrypt must be stored in ...\data\subkey_example.txt')
-        aes.subkey_path = SUBKEY_PATH_WINDOWS
-
-
 def script_execute(aes):
     '''
     Executes our AES algorithm
-    :param: None
+    :param: Nonecheck_OS_and_files
     :return: None if successful
     '''
-    check_OS_and_files(aes)
-    get_message(aes)
-    get_subkeys(aes)
-    get_initial_state(aes)
-    get_subkey_matrix(aes)
-    do_round(aes)
 
+    aes_Obj.do_round(aes)
 
 if __name__ == '__main__':
     try:
