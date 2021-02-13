@@ -14,6 +14,8 @@ PLAINTEXT_PATH_WINDOWS = os.path.dirname(PATH) + '\data\plaintext.txt'
 PLAINTEXT_PATH_LINUX = os.path.dirname(PATH) + '/data/plaintext.txt'
 SUBKEY_PATH_WINDOWS = os.path.dirname(PATH) + '\data\subkey_example.txt'
 SUBKEY_PATH_LINUX = os.path.dirname(PATH) + '/data/subkey_example.txt'
+ENCRYPTION_PATH_WINDOWS = os.path.dirname(PATH) + '\data\encryption_key.txt'
+ENCRYPTION_PATH_LINUX = os.path.dirname(PATH) + '/data/encryption_key.txt'
 SCALE = 16  # equal to hex
 NUM_BITS = 8
 AES_S_BOX = np.array([
@@ -33,7 +35,7 @@ AES_S_BOX = np.array([
     [0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e],
     [0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf],
     [0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16]
-])  # To use the hex values do hex(AES_S_BOX[x,n]) or else it will translate it to binary
+])
 
 MIX_COLUMNS = np.array([
     ["0x02", "0x03", "0x01", "0x01"],
@@ -58,6 +60,7 @@ class aes_Obj(object):
         self.initial_state = None
         self.plaintext_path = None
         self.subkey_path = None
+        self.encryption_key_path = None
         self.subkey0_bin = None
         self.subkey0_hex = None
         self.subkey1_bin = None
@@ -66,7 +69,7 @@ class aes_Obj(object):
         self.subkey_matrix1 = None
 
     @staticmethod
-    def sub_bytes(self):
+    def sub_bytes():
         '''
         Substitute each byte in the State with the AES_S_BOX value
         :param: aes_Obj
@@ -95,7 +98,7 @@ class aes_Obj(object):
         return
 
     @staticmethod
-    def shift_rows(self):
+    def shift_rows():
         '''
         Shift bytes in the State according to AES shifting standard
         :param: aes_Obj
@@ -110,7 +113,7 @@ class aes_Obj(object):
         return
 
     @staticmethod
-    def mix_columns(self):
+    def mix_columns():
         '''
         Invertible transformation on each column, this step will be skipped in the final round
         Look at lecture10 p. 29 for an example. Take the row of the static matrix and then the column of
@@ -149,7 +152,7 @@ class aes_Obj(object):
         return
 
     @staticmethod
-    def add_key_0(self):
+    def add_key_0():
         '''
         This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
         :param: aes_Obj
@@ -180,7 +183,7 @@ class aes_Obj(object):
         return
 
     @staticmethod
-    def add_key_1(self):
+    def add_key_1():
         '''
         This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
         :param: aes_Obj
@@ -211,31 +214,33 @@ class aes_Obj(object):
         return
 
     @staticmethod
-    def do_round(self):
+    def do_round():
         '''
         These are the operations that will be performed in each round of AES
         :param: aes_Obj
         :return: None
         '''
-        aes_Obj.check_OS_and_files(aes)
-        aes_Obj.get_message(aes)
-        aes_Obj.get_subkeys(aes)
-        aes_Obj.get_initial_state(aes)
-        aes_Obj.get_subkey_matrix_0(aes)
-        aes_Obj.get_subkey_matrix_1(aes)
+        aes_Obj.check_OS_and_files()
+        aes_Obj.get_message()
+        aes_Obj.get_subkeys()
+        aes_Obj.get_initial_state()
+        aes_Obj.get_subkey_matrix_0()
+        aes_Obj.get_subkey_matrix_1()
 
-        aes_Obj.add_key_0(aes)  # With subkey 0
+        aes_Obj.add_key_0()  # With subkey 0
 
-        aes_Obj.sub_bytes(aes)
-        aes_Obj.shift_rows(aes)
-        aes_Obj.mix_columns(aes)
+        aes_Obj.sub_bytes()
+        aes_Obj.shift_rows()
+        aes_Obj.mix_columns()
 
-        aes_Obj.add_key_1(aes)  # With subkey 1
+        aes_Obj.add_key_1()  # With subkey 1
+
+        aes_Obj.generate_2_subkeys()
 
         return
 
     @staticmethod
-    def get_initial_state(self):
+    def get_initial_state():
         '''
         The initial state is described as a block 4x4 matrix with the hexadecimal values of the message
         This function will obtain that for us and assign it to the object
@@ -260,7 +265,7 @@ class aes_Obj(object):
         print('Initial State Matrix: \n' + str(aes.initial_state))
 
     @staticmethod
-    def get_subkey_matrix_0(self):
+    def get_subkey_matrix_0():
         '''
         We will need the subkey put into a 4x4 matrix represented using the numpy module
         :param: aes_Obj
@@ -286,7 +291,7 @@ class aes_Obj(object):
         print('sub_key matrix 0: \n' + str(aes.subkey_matrix0))
 
     @staticmethod
-    def get_subkey_matrix_1(self):
+    def get_subkey_matrix_1():
         '''
         We will need the subkey put into a 4x4 matrix represented using the numpy module
         :param: aes_Obj
@@ -312,7 +317,7 @@ class aes_Obj(object):
         print('sub_key matrix 1: \n' + str(aes.subkey_matrix1))
 
     @staticmethod
-    def get_subkeys(self):
+    def get_subkeys():
         '''
         Assigns the subkeys to our AES object in bit form(128-bits) while getting the hexadecimal from our file
         Sometimes our bit converter drops the leading 0 so we need to add it to ensure it is 128-bits
@@ -333,10 +338,9 @@ class aes_Obj(object):
             aes.subkey1_bin = '0' + aes.subkey1_bin
 
     @staticmethod
-    def get_message(self):
+    def get_message():
         '''
         Assigns the plaintext message to our aes object from the file in ASCII format then to binary
-        TODO: The # of bits does not match up to what it's supposed to be. May need to debug later
         :param: aes_Obj
         :return: None
         '''
@@ -354,7 +358,7 @@ class aes_Obj(object):
             raise Exception('Not able to obtain the plaintext message. Please read the file report.pdf')
 
     @staticmethod
-    def check_OS_and_files(self):
+    def check_OS_and_files():
         '''
         Used to determine what the OS is that is being run to determine correct directory structure.
         Also checks to verify that the message and subkey are located in the designated .txt
@@ -368,6 +372,9 @@ class aes_Obj(object):
             if not os.path.exists(SUBKEY_PATH_LINUX):
                 raise Exception('The message to encrypt must be stored in .../data/subkey_example.txt')
             aes.subkey_path = SUBKEY_PATH_LINUX
+            if not os.path.exists(ENCRYPTION_PATH_LINUX):
+                raise Exception('The Encryption key must be stroed in .../data/encryption_key.txt')
+            aes.encryption_key_path = ENCRYPTION_PATH_LINUX
 
         elif aes.platform == "win32" or aes.platform == "win64":
             if not os.path.exists(PLAINTEXT_PATH_WINDOWS):
@@ -376,7 +383,41 @@ class aes_Obj(object):
             if not os.path.exists(SUBKEY_PATH_WINDOWS):
                 raise Exception('The message to encrypt must be stored in ...\data\subkey_example.txt')
             aes.subkey_path = SUBKEY_PATH_WINDOWS
+            if not os.path.exists(ENCRYPTION_PATH_WINDOWS):
+                raise Exception('The Encryption key must be stroed in ...\data\encryption_key.txt')
+            aes.encryption_key_path = ENCRYPTION_PATH_WINDOWS
 
+    @staticmethod
+    def get_encrpyt_key():
+        with open(aes.encryption_key_path, 'r') as f:
+            key = f.read().strip()
+            print('Encryption Key: ' + key)
+
+        return key
+
+    @staticmethod
+    def generate_2_subkeys():
+        '''
+        Generate the first two subkeys given a 128-bit encryption key
+        :param: 128_bit encryption key
+        :return: subkey01, subkey02 both 128 bits
+        '''
+        key = aes_Obj.get_encrpyt_key()
+        chunks = [key[x:x + 8] for x in range(0, len(key), 8)]
+        w0 = chunks[0]
+        w1 = chunks[1]
+        w2 = chunks[2]
+        w3 = chunks[3]
+
+        print(w0)
+        print(w1)
+        print(w2)
+        print(w3)
+
+
+
+
+        return
 
 def to_hex(hexdig):
     return int(hexdig, 16)
@@ -433,28 +474,21 @@ def format_to_bit(hex):
     return bit_val
 
 
-def generate_2_subkeys(key):
-    '''
-    Generate the first two subkeys given a 128-bit encryption key
-    :param: 128_bit encryption key
-    :return: subkey01, subkey02 both 128 bits
-    '''
-
-    return
-
-def script_execute(aes):
+def script_execute():
     '''
     Executes our AES algorithm
     :param: Nonecheck_OS_and_files
     :return: None if successful
     '''
 
-    aes_Obj.do_round(aes)
+    aes_Obj.do_round()
+
 
 if __name__ == '__main__':
     try:
         aes = aes_Obj()
-        script_execute(aes)
+        script_execute()
+
     except:
         print(traceback.format_exc())
         sys.stdout.flush()
