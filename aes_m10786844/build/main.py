@@ -2,12 +2,10 @@
 # EJ Cervantes
 import sys
 import os
-import itertools
 import traceback
 from textwrap import wrap
 import numpy as np  # MUST BE INSTALLED python -m pip install --user numpy scipy matplotlib ipython jupyter pandas sympy nose
-from functools import reduce
-from operator import xor
+
 
 PATH = os.getcwd()
 PLAINTEXT_PATH_WINDOWS = os.path.dirname(PATH) + '\data\plaintext.txt'
@@ -152,14 +150,14 @@ class aes_Obj(object):
         return
 
     @staticmethod
-    def add_key_0():
+    def add_key(state, subkey):
         '''
         This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
         :param: aes_Obj
         :return: None
         '''
         xor_list = []
-        for x, y in zip(aes.initial_state, aes.subkey_matrix0):
+        for x, y in zip(state, subkey):
             for elem1, elem2 in zip(x, y):
                 elem1 = int(elem1, 16)
                 new_elem1 = elem1 + 0x200
@@ -173,10 +171,24 @@ class aes_Obj(object):
                 else:
                     xor_list.append(xor1)
         chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
-        aes.initial_state[0] = chunks[0]
-        aes.initial_state[1] = chunks[1]
-        aes.initial_state[2] = chunks[2]
-        aes.initial_state[3] = chunks[3]
+        state[0] = chunks[0]
+        state[1] = chunks[1]
+        state[2] = chunks[2]
+        state[3] = chunks[3]
+        print('AddKey result: ')
+        print(state)
+
+        return state
+
+    @staticmethod
+    def add_key_0():
+        '''
+        This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
+        :param: aes_Obj
+        :return: None
+        '''
+        aes.initial_state = aes_Obj.add_key(aes.initial_state, aes.subkey_matrix0)
+
         print('AddKey result: ')
         print(aes.initial_state)
 
@@ -189,53 +201,10 @@ class aes_Obj(object):
         :param: aes_Obj
         :return: None
         '''
-        xor_list = []
-        for x, y in zip(aes.initial_state, aes.subkey_matrix1):
-            for elem1, elem2 in zip(x, y):
-                elem1 = int(elem1, 16)
-                new_elem1 = elem1 + 0x200
-                elem2 = int(elem2, 16)
-                new_elem2 = elem2 + 0x200
-                xor1 = new_elem1 ^ new_elem2
-                xor1 = hex(xor1)[2:]
-                if len(xor1) < 2:
-                    r = '0' + xor1
-                    xor_list.append(r)
-                else:
-                    xor_list.append(xor1)
-        chunks = [xor_list[x:x + 4] for x in range(0, len(xor_list), 4)]
-        aes.initial_state[0] = chunks[0]
-        aes.initial_state[1] = chunks[1]
-        aes.initial_state[2] = chunks[2]
-        aes.initial_state[3] = chunks[3]
+        aes.initial_state = aes_Obj.add_key(aes.initial_state, aes.subkey_matrix1)
+
         print('AddKey result: ')
         print(aes.initial_state)
-
-        return
-
-    @staticmethod
-    def do_round():
-        '''
-        These are the operations that will be performed in each round of AES
-        :param: aes_Obj
-        :return: None
-        '''
-        aes_Obj.check_OS_and_files()
-        aes_Obj.get_message()
-        aes_Obj.get_subkeys()
-        aes_Obj.get_initial_state()
-        aes_Obj.get_subkey_matrix_0()
-        aes_Obj.get_subkey_matrix_1()
-
-        aes_Obj.add_key_0()  # With subkey 0
-
-        aes_Obj.sub_bytes()
-        aes_Obj.shift_rows()
-        aes_Obj.mix_columns()
-
-        aes_Obj.add_key_1()  # With subkey 1
-
-        aes_Obj.generate_2_subkeys()
 
         return
 
@@ -247,22 +216,34 @@ class aes_Obj(object):
         :param: aes_Obj
         :return: None
         '''
-        bytes = wrap(aes.message_hex, 2)
+        aes.initial_state = aes.get_matrix(aes.message_hex)
+        print('Initial State Matrix : \n' + str(aes.initial_state))
+
+    @staticmethod
+    def get_matrix(hex):
+        '''
+        We will need the subkey put into a 4x4 matrix represented using the numpy module
+        :param: aes_Obj
+        :return: None
+        '''
+
+        bytes = wrap(hex, 2)
+
         row1 = []
         row2 = []
         row3 = []
         row4 = []
         for index in range(4):
-            row1.append(bytes[index])
+            row1.append('0x' + bytes[index])
         for index in bytes[4:8]:
-            row2.append(index)
+            row2.append('0x' + index)
         for index in bytes[8:12]:
-            row3.append(index)
+            row3.append('0x' + index)
         for index in bytes[12:16]:
-            row4.append(index)
-        aes.initial_state = np.array([row1, row2, row3, row4])
-        aes.initial_state = aes.initial_state.T
-        print('Initial State Matrix: \n' + str(aes.initial_state))
+            row4.append('0x' + index)
+        matrix = np.array([row1, row2, row3, row4])
+        matrix = matrix.T
+        return matrix
 
     @staticmethod
     def get_subkey_matrix_0():
@@ -272,23 +253,8 @@ class aes_Obj(object):
         :return: None
         '''
 
-        bytes = wrap(aes.subkey0_hex, 2)
-
-        row1 = []
-        row2 = []
-        row3 = []
-        row4 = []
-        for index in range(4):
-            row1.append('0x' + bytes[index])
-        for index in bytes[4:8]:
-            row2.append('0x' + index)
-        for index in bytes[8:12]:
-            row3.append('0x' + index)
-        for index in bytes[12:16]:
-            row4.append('0x' + index)
-        aes.subkey_matrix0 = np.array([row1, row2, row3, row4])
-        aes.subkey_matrix0 = aes.subkey_matrix0.T
-        print('sub_key matrix 0: \n' + str(aes.subkey_matrix0))
+        aes.subkey_matrix0 = aes.get_matrix(aes.subkey0_hex)
+        print('sub_key matrix 1: \n' + str(aes.subkey_matrix0))
 
     @staticmethod
     def get_subkey_matrix_1():
@@ -298,22 +264,7 @@ class aes_Obj(object):
         :return: None
         '''
 
-        bytes = wrap(aes.subkey1_hex, 2)
-
-        row1 = []
-        row2 = []
-        row3 = []
-        row4 = []
-        for index in range(4):
-            row1.append('0x' + bytes[index])
-        for index in bytes[4:8]:
-            row2.append('0x' + index)
-        for index in bytes[8:12]:
-            row3.append('0x' + index)
-        for index in bytes[12:16]:
-            row4.append('0x' + index)
-        aes.subkey_matrix1 = np.array([row1, row2, row3, row4])
-        aes.subkey_matrix1 = aes.subkey_matrix1.T
+        aes.subkey_matrix1 = aes.get_matrix(aes.subkey1_hex)
         print('sub_key matrix 1: \n' + str(aes.subkey_matrix1))
 
     @staticmethod
@@ -414,10 +365,34 @@ class aes_Obj(object):
         print(w2)
         print(w3)
 
+        return
 
+    @staticmethod
+    def do_round():
+        '''
+        These are the operations that will be performed in each round of AES
+        :param: aes_Obj
+        :return: None
+        '''
+        aes_Obj.check_OS_and_files()
+        aes_Obj.get_message()
+        aes_Obj.get_subkeys()
+        aes_Obj.get_initial_state()
+        aes_Obj.get_subkey_matrix_0()
+        aes_Obj.get_subkey_matrix_1()
 
+        aes_Obj.add_key_0()  # With subkey 0
+
+        aes_Obj.sub_bytes()
+        aes_Obj.shift_rows()
+        aes_Obj.mix_columns()
+
+        aes_Obj.add_key_1()  # With subkey 1
+
+        aes_Obj.generate_2_subkeys()
 
         return
+
 
 def to_hex(hexdig):
     return int(hexdig, 16)
