@@ -42,11 +42,6 @@ MIX_COLUMNS = np.array([
     ["0x03", "0x01", "0x01", "0x02"]
 ])
 
-'''
-:param: aes_Obj
-:return: None 
-'''
-
 
 class aes_Obj(object):
 
@@ -114,8 +109,6 @@ class aes_Obj(object):
     def mix_columns():
         '''
         Invertible transformation on each column, this step will be skipped in the final round
-        Look at lecture10 p. 29 for an example. Take the row of the static matrix and then the column of
-        our current state, this will give you 1 value for the next part
         :param: None
         :return: None
         '''
@@ -175,8 +168,6 @@ class aes_Obj(object):
         state[1] = chunks[1]
         state[2] = chunks[2]
         state[3] = chunks[3]
-        print('AddKey result: ')
-        print(state)
 
         return state
 
@@ -254,7 +245,7 @@ class aes_Obj(object):
         '''
 
         aes.subkey_matrix0 = aes.get_matrix(aes.subkey0_hex)
-        print('sub_key matrix 1: \n' + str(aes.subkey_matrix0))
+        print('sub_key matrix 0: \n' + str(aes.subkey_matrix0))
 
     @staticmethod
     def get_subkey_matrix_1():
@@ -299,10 +290,9 @@ class aes_Obj(object):
             message_plaintext = f.read().strip()
             print('Message: ' + message_plaintext)
         aes.message_ascii = to_ascii(message_plaintext)
-        print('Message in ASCII: ' + str(aes.message_ascii))
+
         aes.message_bit = format_ascii_to_bit(aes.message_ascii)
-        print('The message in bit form: ' + aes.message_bit)
-        print('Number of bits in message: ' + str(len(aes.message_bit)))
+
         aes.message_hex = format_to_hex(aes.message_bit)
         print('Message in hex-form: ' + aes.message_hex)
         if aes.message_bit is None:
@@ -377,21 +367,16 @@ class aes_Obj(object):
 
         gw3 = ''.join(gw3_list)
 
-        print(gw3)
-
         temp = '40' #Constant in binary 01000000
 
         gw3 = hex((to_hex(gw3) ^ to_hex(temp)))
-        print(gw3)
 
         w4 = hex(((to_hex(w0)) ^ (to_hex(gw3))))[2:]
 
         w5 = hex(((to_hex(w4)) ^ (to_hex(w1))))[2:]
         w6 = hex(((to_hex(w5)) ^ (to_hex(w2))))[2:]
         w7 = hex(((to_hex(w6)) ^ (to_hex(w3))))[2:]
-        print(w5)
-        print(w6)
-        print(w7)
+
         key1 = []
         key2 = []
         key1.append(w0)
@@ -422,18 +407,12 @@ class aes_Obj(object):
         for x in listnp:
             first = x[0]
             second = x[1]
-            print(first)
-            print(second)
             first = int(first)
             second = int(to_hex(second))
-            print(type(first))
-            print(type(second))
 
             new1 = AES_S_BOX[first, second]
 
             list_to_ret.append((hex(new1))[2:])
-
-        print('Sub Byte Result: ')
 
         return list_to_ret
 
