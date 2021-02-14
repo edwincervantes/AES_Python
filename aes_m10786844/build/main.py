@@ -70,7 +70,7 @@ class aes_Obj(object):
     def sub_bytes():
         '''
         Substitute each byte in the State with the AES_S_BOX value
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         for x in aes.initial_state:
@@ -99,7 +99,7 @@ class aes_Obj(object):
     def shift_rows():
         '''
         Shift bytes in the State according to AES shifting standard
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         aes.initial_state[1] = np.roll(aes.initial_state[1], -1)
@@ -116,7 +116,7 @@ class aes_Obj(object):
         Invertible transformation on each column, this step will be skipped in the final round
         Look at lecture10 p. 29 for an example. Take the row of the static matrix and then the column of
         our current state, this will give you 1 value for the next part
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         list = []
@@ -153,7 +153,7 @@ class aes_Obj(object):
     def add_key(state, subkey):
         '''
         This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         xor_list = []
@@ -184,7 +184,7 @@ class aes_Obj(object):
     def add_key_0():
         '''
         This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         aes.initial_state = aes_Obj.add_key(aes.initial_state, aes.subkey_matrix0)
@@ -198,7 +198,7 @@ class aes_Obj(object):
     def add_key_1():
         '''
         This is where we XOR our initial state matrix with our subkey. The output of this will be used as the next rounds initial state
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         aes.initial_state = aes_Obj.add_key(aes.initial_state, aes.subkey_matrix1)
@@ -213,7 +213,7 @@ class aes_Obj(object):
         '''
         The initial state is described as a block 4x4 matrix with the hexadecimal values of the message
         This function will obtain that for us and assign it to the object
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         aes.initial_state = aes.get_matrix(aes.message_hex)
@@ -223,7 +223,7 @@ class aes_Obj(object):
     def get_matrix(hex):
         '''
         We will need the subkey put into a 4x4 matrix represented using the numpy module
-        :param: aes_Obj
+        :param: hex value used for the matrix
         :return: None
         '''
 
@@ -249,7 +249,7 @@ class aes_Obj(object):
     def get_subkey_matrix_0():
         '''
         We will need the subkey put into a 4x4 matrix represented using the numpy module
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
 
@@ -260,7 +260,7 @@ class aes_Obj(object):
     def get_subkey_matrix_1():
         '''
         We will need the subkey put into a 4x4 matrix represented using the numpy module
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
 
@@ -272,7 +272,7 @@ class aes_Obj(object):
         '''
         Assigns the subkeys to our AES object in bit form(128-bits) while getting the hexadecimal from our file
         Sometimes our bit converter drops the leading 0 so we need to add it to ensure it is 128-bits
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         with open(aes.subkey_path, 'r') as f:
@@ -292,7 +292,7 @@ class aes_Obj(object):
     def get_message():
         '''
         Assigns the plaintext message to our aes object from the file in ASCII format then to binary
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         with open(aes.plaintext_path, 'r') as f:
@@ -313,7 +313,8 @@ class aes_Obj(object):
         '''
         Used to determine what the OS is that is being run to determine correct directory structure.
         Also checks to verify that the message and subkey are located in the designated .txt
-        :param: aes_Obj
+        This is not needed for the project but makes the script more unix/windows friendly
+        :param: None
         :return: None
         '''
         if aes.platform == "linux" or aes.platform == "linux2" or aes.platform == "darwin":
@@ -340,6 +341,11 @@ class aes_Obj(object):
 
     @staticmethod
     def get_encrpyt_key():
+        '''
+        Gets the an encryption key that is given to us
+        :param: None
+        :return: 128_bit encryption key
+        '''
         with open(aes.encryption_key_path, 'r') as f:
             key = f.read().strip()
             print('Encryption Key: ' + key)
@@ -350,8 +356,9 @@ class aes_Obj(object):
     def generate_2_subkeys():
         '''
         Generate the first two subkeys given a 128-bit encryption key
+        A little clunky but takes care of the first two keys. Did not need to iterate for all 12 round keys
         :param: 128_bit encryption key
-        :return: subkey01, subkey02 both 128 bits
+        :return: subkey01, subkey02 both 128 bits but are formatted to the hex values
         '''
         key = aes_Obj.get_encrpyt_key()
         chunks = [key[x:x + 8] for x in range(0, len(key), 8)]
@@ -364,7 +371,7 @@ class aes_Obj(object):
         gw3 = w3[temp:] + w3[: temp]
 
         gw3_list = [gw3[i:i + 2] for i in range(0, len(gw3), 2)]    #Create into list
-        print(gw3_list)
+
 
         gw3_list = aes_Obj.sub_bytes_key(gw3_list)
 
@@ -376,15 +383,8 @@ class aes_Obj(object):
 
         gw3 = hex((to_hex(gw3) ^ to_hex(temp)))
         print(gw3)
-        print("we made it")
-        w4 = hex(((to_hex(w0)) ^ (to_hex(gw3))))[2:]
-        print("w4:")
-        print(w4)
 
-        print(w0)
-        print(w1)
-        print(w2)
-        print(w3)
+        w4 = hex(((to_hex(w0)) ^ (to_hex(gw3))))[2:]
 
         w5 = hex(((to_hex(w4)) ^ (to_hex(w1))))[2:]
         w6 = hex(((to_hex(w5)) ^ (to_hex(w2))))[2:]
@@ -413,7 +413,7 @@ class aes_Obj(object):
     def sub_bytes_key(list):
         '''
         Substitute each byte in the State with the AES_S_BOX value
-        :param: aes_Obj
+        :param: list of hex values
         :return: None
         '''
         list_to_ret = []
@@ -433,9 +433,7 @@ class aes_Obj(object):
 
             list_to_ret.append((hex(new1))[2:])
 
-
         print('Sub Byte Result: ')
-
 
         return list_to_ret
 
@@ -443,7 +441,7 @@ class aes_Obj(object):
     def do_round():
         '''
         These are the operations that will be performed in each round of AES
-        :param: aes_Obj
+        :param: None
         :return: None
         '''
         aes_Obj.check_OS_and_files()
@@ -461,12 +459,17 @@ class aes_Obj(object):
 
         aes_Obj.add_key_1()  # With subkey 1
 
-        aes_Obj.generate_2_subkeys()
+        aes_Obj.generate_2_subkeys()       #This is the function meant for graduate school students. These keys are not used it is just to show the operation
 
         return
 
 
 def to_hex(hexdig):
+    '''
+    Convert a string hex value to literal hex value
+    :param: string hex value
+    :return: hex Value literal
+    '''
     return int(hexdig, 16)
 
 
@@ -524,8 +527,8 @@ def format_to_bit(hex):
 def script_execute():
     '''
     Executes our AES algorithm
-    :param: Nonecheck_OS_and_files
-    :return: None if successful
+    :param: None
+    :return: None if successful. See output for AES report
     '''
 
     aes_Obj.do_round()
