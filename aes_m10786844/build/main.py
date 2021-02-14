@@ -360,12 +360,84 @@ class aes_Obj(object):
         w2 = chunks[2]
         w3 = chunks[3]
 
+        temp = (2) % len(w3)        #Shift left 1 byte
+        gw3 = w3[temp:] + w3[: temp]
+
+        gw3_list = [gw3[i:i + 2] for i in range(0, len(gw3), 2)]    #Create into list
+        print(gw3_list)
+
+        gw3_list = aes_Obj.sub_bytes_key(gw3_list)
+
+        gw3 = ''.join(gw3_list)
+
+        print(gw3)
+
+        temp = '40' #Constant in binary 01000000
+
+        gw3 = hex((to_hex(gw3) ^ to_hex(temp)))
+        print(gw3)
+        print("we made it")
+        w4 = hex(((to_hex(w0)) ^ (to_hex(gw3))))[2:]
+        print("w4:")
+        print(w4)
+
         print(w0)
         print(w1)
         print(w2)
         print(w3)
 
+        w5 = hex(((to_hex(w4)) ^ (to_hex(w1))))[2:]
+        w6 = hex(((to_hex(w5)) ^ (to_hex(w2))))[2:]
+        w7 = hex(((to_hex(w6)) ^ (to_hex(w3))))[2:]
+        print(w5)
+        print(w6)
+        print(w7)
+        key1 = []
+        key2 = []
+        key1.append(w0)
+        key1.append(w1)
+        key1.append(w2)
+        key1.append(w3)
+        print("key 1: ")
+        print(key1)
+        key2.append(w4)
+        key2.append(w5)
+        key2.append(w6)
+        key2.append(w7)
+        print("key 2: ")
+        print(key2)
+
         return
+
+    @staticmethod
+    def sub_bytes_key(list):
+        '''
+        Substitute each byte in the State with the AES_S_BOX value
+        :param: aes_Obj
+        :return: None
+        '''
+        list_to_ret = []
+
+        listnp = np.array(list)
+        for x in listnp:
+            first = x[0]
+            second = x[1]
+            print(first)
+            print(second)
+            first = int(first)
+            second = int(to_hex(second))
+            print(type(first))
+            print(type(second))
+
+            new1 = AES_S_BOX[first, second]
+
+            list_to_ret.append((hex(new1))[2:])
+
+
+        print('Sub Byte Result: ')
+
+
+        return list_to_ret
 
     @staticmethod
     def do_round():
