@@ -14,6 +14,11 @@ SUBKEY_PATH_WINDOWS = os.path.dirname(PATH) + '\data\subkey_example.txt'
 SUBKEY_PATH_LINUX = os.path.dirname(PATH) + '/data/subkey_example.txt'
 ENCRYPTION_PATH_WINDOWS = os.path.dirname(PATH) + '\data\encryption_key.txt'
 ENCRYPTION_PATH_LINUX = os.path.dirname(PATH) + '/data/encryption_key.txt'
+RESULT_PATH_WINDOWS = os.path.dirname(PATH) + '\data\ result_subkey.txt'
+RESULT_PATH_LINUX = os.path.dirname(PATH) + '/data/result_subkey.txt'
+RESULT_DIR_WINDOWS = os.path.dirname(PATH) + '\data\ result.txt'
+RESULT_DIR_LINUX = os.path.dirname(PATH) + '/data/result.txt'
+
 SCALE = 16  # equal to hex
 NUM_BITS = 8
 AES_S_BOX = np.array([
@@ -54,6 +59,8 @@ class aes_Obj(object):
         self.plaintext_path = None
         self.subkey_path = None
         self.encryption_key_path = None
+        self.result_path = None
+        self.result_dir = None
         self.subkey0_bin = None
         self.subkey0_hex = None
         self.subkey1_bin = None
@@ -317,6 +324,8 @@ class aes_Obj(object):
             if not os.path.exists(ENCRYPTION_PATH_LINUX):
                 raise Exception('The Encryption key must be stroed in .../data/encryption_key.txt')
             aes.encryption_key_path = ENCRYPTION_PATH_LINUX
+            aes.result_path = RESULT_PATH_LINUX
+            aes.result_dir = RESULT_DIR_LINUX
 
         elif aes.platform == "win32" or aes.platform == "win64":
             if not os.path.exists(PLAINTEXT_PATH_WINDOWS):
@@ -328,6 +337,9 @@ class aes_Obj(object):
             if not os.path.exists(ENCRYPTION_PATH_WINDOWS):
                 raise Exception('The Encryption key must be stroed in ...\data\encryption_key.txt')
             aes.encryption_key_path = ENCRYPTION_PATH_WINDOWS
+            aes.result_path = RESULT_PATH_WINDOWS
+            aes.result_dir = RESULT_DIR_WINDOWS
+
 
     @staticmethod
     def get_encrpyt_key():
@@ -350,7 +362,7 @@ class aes_Obj(object):
         :param: 128_bit encryption key
         :return: subkey01, subkey02 both 128 bits but are formatted to the hex values
         '''
-        key = aes_Obj.get_encrpyt_key()
+        key = aes.subkey0_hex
         chunks = [key[x:x + 8] for x in range(0, len(key), 8)]
         w0 = chunks[0]
         w1 = chunks[1]
@@ -391,6 +403,11 @@ class aes_Obj(object):
         key2.append(w7)
         print("key 2: ")
         print(key2)
+        outF = open(aes.result_path, "w")
+        for line in key2:
+            outF.write(line)
+            outF.write("\n")
+        outF.close()
 
         return
 
@@ -417,6 +434,16 @@ class aes_Obj(object):
         return list_to_ret
 
     @staticmethod
+    def results():
+
+        output = []
+        for line in aes.initial_state:
+            output.append(str(line))
+        outF = open(aes.result_dir, "w")
+        outF.write(str(output))
+        outF.close()
+
+    @staticmethod
     def do_round():
         '''
         These are the operations that will be performed in each round of AES
@@ -437,6 +464,8 @@ class aes_Obj(object):
         aes_Obj.mix_columns()
 
         aes_Obj.add_key_1()  # With subkey 1
+
+        aes_Obj.results()
 
         aes_Obj.generate_2_subkeys()       #This is the function meant for graduate school students. These keys are not used it is just to show the operation
 
